@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  phone         String   @unique
+  password      String
+  dateOfBirth   DateTime
+  gender        String
+  brands        Brand[]  @relation(name: "UserBrands") // One-to-many relation (User to Brands)
+  activeBrandId String?  @map("active_brand_id")
+  activeBrand   Brand?   @relation(name: "ActiveBrand", fields: [activeBrandId], references: [id])
+
+  @@map("users")
+}
+
+model Brand {
+  id          String  @id @default(cuid())
+  name        String
+  userId      String?
+  User        User?   @relation(name: "UserBrands", fields: [userId], references: [id]) // One-to-many relation (User to Brands)
+  activeUsers User[]  @relation(name: "ActiveBrand") // Back-reference for activeBrand relation
+  apps        App[]
+
+  @@map("brands")
+}
+
+model App {
+  id             String  @id @default(cuid())
+  platform       String
+  accessToken    String  @map("access_token")
+  Brand          Brand?  @relation(fields: [brandId], references: [id])
+  brandId        String?
+  facebookUserId String  @map("facebook_user_id")
+
+  @@map("apps")
+}
