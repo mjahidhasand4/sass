@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { prisma } from "@/lib";
+import prisma from "@/lib/prisma";
 import { findChannelsByBrandId, findUserById } from "@/repository";
 
 /**
