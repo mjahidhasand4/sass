@@ -1,30 +1,34 @@
 import { auth } from "@/auth";
 import { cookies } from "next/headers";
 
-const getApps = async () => {
-  const session = await auth();
-  
+const getApps = async (session) => {
   if (!session) {
     throw new Error("Unauthorized");
   }
-  
+
+  const cookieHeader = cookies()
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
+
   const response = await fetch("http://localhost:3000/api/v1/channel", {
     headers: {
-      Cookie: cookies().toString(),
+      Cookie: cookieHeader, // ✅ Correctly format cookies
     },
+    credentials: "include", // ✅ Ensure cookies are included
   });
-  
+
   if (!response.ok) {
-    throw new Error("Failed to fetch apps");
+    throw new Error(`Failed to fetch apps. Status: ${response.status}`);
   }
-  
+
   return response.json();
 };
 
 const Apps = async () => {
   try {
     const session = await auth();
-    
+
     if (!session) {
       return (
         <main className="p-4">
@@ -33,9 +37,9 @@ const Apps = async () => {
         </main>
       );
     }
-    
-    const apps = await getApps();
-    
+
+    const apps = await getApps(session);
+
     return (
       <main className="p-4">
         <h1 className="text-xl font-bold">Your Connected Apps</h1>
@@ -46,7 +50,11 @@ const Apps = async () => {
     return (
       <main className="p-4">
         <h1 className="text-xl font-bold">Error</h1>
-        <p>{error instanceof Error ? error.message : "An error occurred"}</p>
+        <p>
+          {error instanceof Error
+            ? error.message
+            : "An unexpected error occurred."}
+        </p>
       </main>
     );
   }

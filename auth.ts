@@ -1,4 +1,4 @@
-import { findUserByPhone } from "@/repository";
+import { User } from "@/repository";
 import bcrypt from "bcryptjs";
 import NextAuth, { User as NextAuthUser } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -24,7 +24,7 @@ export const authConfig = {
 
         const phone = credentials.phone as string;
         const password = credentials.password as string;
-        const user = await findUserByPhone(phone);
+        const user = await User.findByPhone(phone);
         if (!user) {
           throw new Error("User not found");
         }

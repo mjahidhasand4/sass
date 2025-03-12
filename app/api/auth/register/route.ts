@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendOtp, verifyOtp } from "@/lib/redis-otp";
-import { registerUserWithSupabase } from "@/controllers";
 import { hash } from "bcryptjs";
+import { User } from "@/repository";
 
 /**
  * Combined endpoint for the entire OTP-based registration flow
@@ -67,13 +67,11 @@ export const POST = async (request: Request) => {
       }
 
       const hashedPassword = await hash(password, 10);
-      await prisma.user.create({
-        data: {
-          phone,
-          password: hashedPassword,
-          dateOfBirth: new Date(dateOfBirth),
-          gender,
-        },
+      User.new({
+        phone,
+        password: hashedPassword,
+        dateOfBirth: new Date(dateOfBirth),
+        gender,
       });
 
       return NextResponse.json({}, { status: 201 });

@@ -1,93 +1,58 @@
 import { prisma } from "@/lib";
+import { IBrand } from "@/types/repository";
 
-/**
- * Find brand by user ID.
- */
-export const findBrandByUserId = async (userId: string, brandId: string) => {
-  return prisma.brand.findMany({
-    where: { id: brandId, userId },
-    include: { apps: true },
-  });
-};
-
-/**
- * Find brands by user ID.
- */
-export const findBrandsByUserId = async (userId: string) => {
-  return prisma.brand.findMany({
-    where: { userId },
-    include: { apps: true },
-  });
-};
-
-/**
- * Find a brand by ID.
- */
-export const findBrandById = async (id: string) => {
-  return prisma.brand.findUnique({
-    where: { id },
-    include: { apps: true },
-  });
-};
-
-/**
- * Find a brand by name.
- */
-export const findBrandByName = async (name: string) => {
-  return prisma.brand.findFirst({
-    where: { name },
-  });
-};
-
-/**
- * Find the active brand for a user.
- */
-export const findActiveBrandByUserId = async (userId: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { activeBrand: true }, // Fetch only the active brand
-  });
-
-  if (!user || !user.activeBrand) {
-    return null; // No active brand found
+class _Brand {
+  // ✅ Create a new Brand
+  static async new(data: IBrand) {
+    const { name, userId } = data;
+    return await prisma.brand.create({
+      data: { name, userId },
+    });
   }
 
-  return user.activeBrand;
-};
+  // ✅ Get a Brand by ID
+  static async find(id: string) {
+    return await prisma.brand.findUnique({
+      where: { id },
+    });
+  }
 
-/**
- * Create a new brand.
- */
-export const createBrand = async (name: string, userId: string) => {
-  return prisma.brand.create({
-    data: {
-      name,
-      User: {
-        connect: {
-          id: userId,
-        },
-      },
-    },
-  });
-};
+  // ✅ Get all Brands (excluding soft-deleted ones)
+  static async all() {
+    return await prisma.brand.findMany({
+      where: { deletedAt: null },
+    });
+  }
 
-/**
- * Update an existing brand.
- */
-export const updateBrand = async (id: string, name: string) => {
-  return prisma.brand.update({
-    where: { id },
-    data: {
-      name,
-    },
-  });
-};
+  // ✅ Get Brands by User ID
+  static async byUser(userId: string) {
+    return await prisma.brand.findMany({
+      where: { userId, deletedAt: null },
+    });
+  }
 
-/**
- * Delete a brand by ID.
- */
-export const deleteBrand = async (id: string) => {
-  return prisma.brand.delete({
-    where: { id },
-  });
-};
+  // ✅ Update Brand details
+  static async update(id: string, data: IBrand) {
+    return await prisma.brand.update({
+      where: { id },
+      data,
+    });
+  }
+
+  // ✅ Soft Delete Brand (sets deletedAt)
+  static async softDelete(id: string) {
+    return await prisma.brand.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  // ✅ Permanently Delete Brand
+  static async delete(id: string) {
+    return await prisma.brand.delete({
+      where: { id },
+    });
+  }
+}
+
+export const Brand = new _Brand();

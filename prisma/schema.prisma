@@ -18,6 +18,10 @@ model User {
   activeBrandId String?  @map("active_brand_id")
   activeBrand   Brand?   @relation(name: "ActiveBrand", fields: [activeBrandId], references: [id])
 
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
   @@map("users")
 }
 
@@ -29,16 +33,34 @@ model Brand {
   activeUsers User[]  @relation(name: "ActiveBrand") // Back-reference for activeBrand relation
   apps        App[]
 
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
   @@map("brands")
 }
 
 model App {
-  id             String  @id @default(cuid())
-  platform       String
-  accessToken    String  @map("access_token")
-  Brand          Brand?  @relation(fields: [brandId], references: [id])
-  brandId        String?
-  facebookUserId String  @map("facebook_user_id")
+  id          String   @id @default(cuid())
+  platform    String
+  accessToken String   @map("access_token")
+  brandId     String?
+  Brand       Brand?   @relation(fields: [brandId], references: [id])
+  type        APP_TYPE @default(APP)
+
+  // ✅ Corrected Self-Referencing Relation
+  appId     String? @map("app_id") // Parent App ID (Nullable)
+  parentApp App?    @relation("ParentChildApps", fields: [appId], references: [id]) // Reference to parent app
+  childApps App[]   @relation("ParentChildApps") // Back-reference for child apps
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   @@map("apps")
+}
+
+enum APP_TYPE {
+  APP
+  CHANNEL
 }

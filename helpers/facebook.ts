@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
-import { findActiveBrandByUserId, updateApp } from "@/repository";
-import { createChannel, findAppByFacebookUserId } from "@/repository";
 import { FacebookAdsApi, User } from "facebook-nodejs-business-sdk";
+import { App, User as UserRepository } from "@/repository";
 
 const REDIRECT_URI = process.env.META_REDIRECT_URI!;
 const META_APP_ID = process.env.META_APP_ID!;
@@ -57,6 +56,13 @@ export const handleMetaCallback = async (
 // ✅ Exchange Code for Access Token
 export const fetchOAuthToken = async (platform: string, code: string) => {
   try {
+    if (!platform) {
+      return new Response(
+        JSON.stringify({ error: "Platform cannot be null" }),
+        { status: 400 }
+      );
+    }
+
     // ✅ Step 1: Exchange Code for Access Token
     const response = await fetch(
       `https://graph.facebook.com/v22.0/oauth/access_token?` +
@@ -95,8 +101,8 @@ export const fetchOAuthToken = async (platform: string, code: string) => {
     FacebookAdsApi.init(accessToken);
 
     // ✅ Step 3: Retrieve Facebook User ID
-    const user = new User("me");
-    const userData = await user.read(["id"]);
+    const fbUser = new User("me");
+    const userData = await fbUser.read(["id"]);
 
     if (!userData || !userData.id) {
       throw new Error("Failed to retrieve user ID");
@@ -112,33 +118,40 @@ export const fetchOAuthToken = async (platform: string, code: string) => {
 
     // ✅ Step 5: Get Active Brand for the User
     const userId = session.user.id as string;
-    const activeBrand = await findActiveBrandByUserId(userId);
-    if (!activeBrand) {
+    const activeBrand = await UserRepository.findActiveBrand(userId);
+
+    if (!activeBrand || !activeBrand.activeBrandId) {
       return Response.json(
         { error: "No active brand found for the user" },
         { status: 400 }
       );
     }
 
+    const activeBrandId = activeBrand.activeBrandId as string;
+
     // ✅ Step 6: Check if Existing Connection Exists
-    const existingChannel = await findAppByFacebookUserId(
-      activeBrand.id,
-      facebookUserId
-    );
+    const existingChannel = await App.find(activeBrandId);
 
     if (existingChannel) {
       // Update Existing Connection
-      await updateApp(existingChannel.id, { accessToken });
+      await App.update(existingChannel.id, {
+        id: existingChannel.id, // ✅ Ensure id is included
+        accessToken,
+        platform,
+        type: "APP",
+        appId: facebookUserId,
+        brandId: activeBrandId,
+      });
     } else {
-      // Create New Connection
-      await createChannel(
-        activeBrand.id,
-        {
-          platform: platform,
-          accessToken: accessToken,
-        },
-        facebookUserId
-      );
+      // Ensure new entry has an `id`
+      await App.new({
+        id: crypto.randomUUID(), // ✅ Generate a valid ID
+        appId: facebookUserId,
+        type: "APP",
+        brandId: activeBrandId,
+        platform,
+        accessToken,
+      });
     }
 
     return Response.json({ success: true, facebookUserId }, { status: 201 });

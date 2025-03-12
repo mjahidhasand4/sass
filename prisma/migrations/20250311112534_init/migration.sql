@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "APP_TYPE" AS ENUM ('APP', 'CHANNEL');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
@@ -6,6 +9,9 @@ CREATE TABLE "users" (
     "dateOfBirth" TIMESTAMP(3) NOT NULL,
     "gender" TEXT NOT NULL,
     "active_brand_id" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -15,6 +21,9 @@ CREATE TABLE "brands" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "userId" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "brands_pkey" PRIMARY KEY ("id")
 );
@@ -25,7 +34,11 @@ CREATE TABLE "apps" (
     "platform" TEXT NOT NULL,
     "access_token" TEXT NOT NULL,
     "brandId" TEXT,
-    "facebook_user_id" TEXT NOT NULL,
+    "type" "APP_TYPE" NOT NULL DEFAULT 'APP',
+    "app_id" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "apps_pkey" PRIMARY KEY ("id")
 );
@@ -41,3 +54,6 @@ ALTER TABLE "brands" ADD CONSTRAINT "brands_userId_fkey" FOREIGN KEY ("userId") 
 
 -- AddForeignKey
 ALTER TABLE "apps" ADD CONSTRAINT "apps_brandId_fkey" FOREIGN KEY ("brandId") REFERENCES "brands"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "apps" ADD CONSTRAINT "apps_app_id_fkey" FOREIGN KEY ("app_id") REFERENCES "apps"("id") ON DELETE SET NULL ON UPDATE CASCADE;

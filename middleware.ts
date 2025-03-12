@@ -1,35 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const PUBLIC_ROUTES = ["/api/auth", "/signin", "/register"];
-const PROTECTED_ROUTES = ["/api/v1", "/", "/social"];
-
 export const middleware = async (req: NextRequest) => {
+  // ✅ Get token using default behavior (cookies are automatically included)
   const token = await getToken({ req, secret: process.env.AUTH_SECRET });
-  // console.log("Token: ", token);
-  const { pathname } = req.nextUrl;
 
-  // Allow access to explicitly defined public routes
-  if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
-    if (token && (pathname === "/signin" || pathname === "/register")) {
+  console.log(
+    "Middleware Token:",
+    token,
+    "Request Path:",
+    req.nextUrl.pathname
+  );
+
+  // ✅ Allow Public Routes
+  const PUBLIC_ROUTES = ["/api/auth", "/signin", "/register"];
+  if (PUBLIC_ROUTES.includes(req.nextUrl.pathname)) {
+    if (token && req.nextUrl.pathname === "/signin") {
       return NextResponse.redirect(new URL("/", req.url));
     }
     return NextResponse.next();
   }
 
-  // Restrict access to protected routes
-  if (PROTECTED_ROUTES.some((route) => pathname.startsWith(route))) {
-    if (!token) {
-      return pathname.startsWith("/api/")
-        ? NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-        : NextResponse.redirect(new URL("/signin", req.url));
-    }
+  // ❌ Block Unauthorized Requests to Protected Routes
+  if (!token && req.nextUrl.pathname.startsWith("/api/v1/")) {
+    console.log("❌ Middleware Blocked Unauthorized Request");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   return NextResponse.next();
 };
 
-// Middleware execution configuration
+// ✅ Correct Matcher Configuration
 export const config = {
-  matcher: ["/api/v1/:path*", "/signin", "/register", "/social/:path*"],
+  matcher: ["/api/v1/:path*", "/social/:path*"],
 };

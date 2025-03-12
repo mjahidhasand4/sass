@@ -1,61 +1,69 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib";
+import { IAPP } from "@/types/repository";
 
-const prisma = new PrismaClient();
-
-// ✅ **Find all channels by brand ID**
-export const findChannelsByBrandId = async (brandId: string) => {
-  try {
-    const channels = await prisma.app.findMany({
-      where: { brandId },
-    });
-
-    return channels;
-  } catch (error) {
-    console.error("Error finding channels:", error);
-    throw new Error("Failed to retrieve channels.");
-  }
-};
-
-// ✅ **Create a new channel for a given brand**
-export const createChannel = async (
-  brandId: string,
-  channel: { platform: string; accessToken: string },
-  facebookUserId: string
-) => {
-  try {
-    const newChannel = await prisma.app.create({
+class _App {
+  // Create a new App
+  async new(data: IAPP) {
+    const { appId, type, platform, accessToken, brandId } = data;
+    return await prisma.app.create({
       data: {
-        platform: channel.platform,
-        accessToken: channel.accessToken,
+        appId: appId,
+        type: type ?? "APP",
+        platform: platform,
+        accessToken: accessToken,
         brandId: brandId,
-        facebookUserId,
       },
     });
-
-    return newChannel;
-  } catch (error) {
-    console.error("Error creating channel:", error);
-    throw new Error("Failed to create channel.");
   }
-};
 
-// ✅ Find an Existing Facebook App Connection
-export const findAppByFacebookUserId = (
-  brandId: string,
-  facebookUserId: string
-) => {
-  return prisma.app.findFirst({
-    where: {
-      brandId,
-      facebookUserId,
-    },
-  });
-};
+  // Get an App by ID
+  async find(id: string) {
+    return await prisma.app.findUnique({
+      where: { id },
+    });
+  }
 
-// ✅ Update Existing App Data
-export async function updateApp(appId: string, data: { accessToken: string }) {
-  return prisma.app.update({
-    where: { id: appId },
-    data,
-  });
+  // Get all Apps
+  async all() {
+    return await prisma.app.findMany();
+  }
+
+  // Get Apps by Brand ID
+  async findByBrand(brandId: string) {
+    return await prisma.app.findMany({
+      where: { brandId },
+    });
+  }
+
+  // Get Child Apps for a given App
+  async findChilds(parentAppId: string) {
+    return await prisma.app.findMany({
+      where: { appId: parentAppId },
+    });
+  }
+
+  // Update an App
+  async update(id: string, data: IAPP) {
+    return await prisma.app.update({
+      where: { id },
+      data,
+    });
+  }
+
+  // Delete an App (Soft Delete by setting deletedAt)
+  async softDelete(id: string) {
+    return await prisma.app.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  // Delete an App (Permanent Deletion)
+  async delete(id: string) {
+    return await prisma.app.delete({
+      where: { id },
+    });
+  }
 }
+
+export const App = new _App();

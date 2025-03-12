@@ -4,9 +4,6 @@ import { useState } from "react";
 const Brand = () => {
   const [formData, setFormData] = useState({
     name: "",
-    description: "",
-    website: "",
-    logo: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,39 +39,6 @@ const Brand = () => {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="w-full p-2 border rounded-md"
             required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Description</label>
-          <textarea
-            value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
-            className="w-full p-2 border rounded-md h-32"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Website</label>
-          <input
-            type="url"
-            value={formData.website}
-            onChange={(e) =>
-              setFormData({ ...formData, website: e.target.value })
-            }
-            className="w-full p-2 border rounded-md"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Logo URL</label>
-          <input
-            type="url"
-            value={formData.logo}
-            onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
-            className="w-full p-2 border rounded-md"
           />
         </div>
 
